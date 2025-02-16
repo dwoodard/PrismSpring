@@ -35,4 +35,6 @@ return [
         ],
     ],
 
+    'transform_endpoint' => env('TRANSFORM_ENDPOINT', 'http://localhost:8000/transform'),
+
 ];

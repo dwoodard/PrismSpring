@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('source');
             $table->text('raw_data');
             $table->json('transformed_data')->nullable();
+            $table->vector('vector_data', 300)->nullable();
             $table->timestamps();
         });
     }

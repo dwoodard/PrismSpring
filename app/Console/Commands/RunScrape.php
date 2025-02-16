@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class RunScrape extends Command
 {
@@ -25,14 +27,33 @@ class RunScrape extends Command
      */
     public function handle()
     {
-        $client = new Client();
         $url = $this->argument('url');
         try {
-            $crawler = $client->request('GET', $url);
-            // Example: scrape all H1 text
-            $data = $crawler->filter('h1')->each(function ($node) {
-                return $node->text();
-            });
+            $response = Http::get($url);
+            if (!$response->successful()) {
+                throw new \Exception('HTTP request failed with status ' . $response->status());
+            }
+            $html = $response->body();
+            
+            // Parse HTML to extract all h1 texts
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            $xpath = new \DOMXPath($dom);
+            $nodes = $xpath->query('//h1');
+            $data = [];
+            foreach ($nodes as $node) {
+                $data[] = trim($node->nodeValue);
+            }
+
+            // Capture the raw HTML and store in the database
+            \DB::table('data_entries')->insert([
+                'source' => $url,
+                'raw_data' => $html,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
             Log::info('Scraped Data:', $data);
             $this->info('Scraped Data: ' . json_encode($data));
         } catch (\Exception $e) {
