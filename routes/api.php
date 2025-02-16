@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ScrapeController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::get('/scrape', [ScrapeController::class, 'triggerScrape']);
+Route::get('/status', [ScrapeController::class, 'checkStatus']);
+Route::get('/data', [ScrapeController::class, 'getData']);
