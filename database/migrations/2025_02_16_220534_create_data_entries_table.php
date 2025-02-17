@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('data_entries', function (Blueprint $table) {
             $table->id();
             $table->string('source');
-            $table->text('raw_data');
-            $table->json('transformed_data')->nullable();
-            $table->vector('vector_data', 300)->nullable();
+            $table->text('raw_data')->nullable();
+            $table->text('transformed_data')->nullable();
+            $table->vector('embeddings', 300)->nullable();
             $table->timestamps();
         });
     }
