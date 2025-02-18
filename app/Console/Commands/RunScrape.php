@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Log;
 use League\HTMLToMarkdown\HtmlConverter;
 use League\HTMLToMarkdown\Converter\TableConverter;
 use League\HTMLToMarkdown\Converter\ImageConverter;
+use App\Services\DataEntryRepository; // added import
+use EchoLabs\Prism\Enums\Provider;
+use EchoLabs\Prism\Prism;
+use EchoLabs\Prism\Providers\Ollama;
 
 
 class RunScrape extends Command
@@ -17,7 +21,7 @@ class RunScrape extends Command
      *
      * @var string
      */
-    protected $signature = 'prism:scrape {url : The URL to scrape}';
+    protected $signature = 'mindex:scrape {url : The URL to scrape}';
 
     /**
      * The console command description.
@@ -69,18 +73,25 @@ class RunScrape extends Command
             ;
             $markdown = $converter->convert($html);
 
-            // Capture the raw HTML and store in the database
-            \DB::table('data_entries')->insert([
+            try {
+                $embedding = Prism::embeddings()
+                    ->using(Provider::Ollama, 'nomic-embed-text')
+                    ->fromInput($markdown)
+                    ->generate();
+            } catch (PrismException $e) {
+                Log::error('Embeddings generation failed:', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            $repository = new DataEntryRepository();
+            $id = $repository->store([
                 'source' => $url,
-                // 'raw_data' => $html,
                 'transformed_data' => $markdown,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'embedding' => json_encode($embedding->embeddings)
             ]);
 
-            
-            
-            $this->info('Scraped Data: ' . $this->argument('url'));
+            $this->info('Scraped Data stored with ID: ' . $id);
         } catch (\Exception $e) {
             Log::error('Scraping error: ' . $e->getMessage());
             $this->error('Error: ' . $e->getMessage());
