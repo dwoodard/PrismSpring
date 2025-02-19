@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('data_entries', function (Blueprint $table) {
+        Schema::create('entries', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
             $table->string('source');
             $table->string('type')->nullable(); // e.g., pdf, mp3, mp4, website, text
             $table->string('title')->nullable();
@@ -34,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('data_entries');
+        Schema::dropIfExists('entries');
     }
 };
